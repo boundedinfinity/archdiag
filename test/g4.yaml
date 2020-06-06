@@ -1,0 +1,9 @@
+---
+name: g4.yaml
+direction: vertical
+nodes:
+    dc-1:
+        nodes:
+            server-1:
+            server-2:
+

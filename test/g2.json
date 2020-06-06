@@ -1,0 +1,7 @@
+{
+    "name": "g2.json",
+    "nodes": {
+        "server-1": {},
+        "server-2": {}
+    }
+}

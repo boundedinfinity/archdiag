@@ -1,0 +1,8 @@
+{
+    "name": "g3.json",
+    "direction": "vertical",
+    "nodes": {
+        "server-1": {},
+        "server-2": {}
+    }
+}

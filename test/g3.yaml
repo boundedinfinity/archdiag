@@ -1,0 +1,6 @@
+---
+name: g3.yaml
+direction: vertical
+nodes:
+    server-1:
+    server-2:

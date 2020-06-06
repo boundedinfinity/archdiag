@@ -1,0 +1,5 @@
+---
+name: g2.yaml
+nodes:
+    server-1:
+    server-2:
