@@ -7,14 +7,39 @@ import (
 	svg "github.com/ajstarks/svgo"
 )
 
+const (
+	root_id = "root"
+)
+
 type box struct {
 	id         string
 	label      string
-	children   map[string]box
+	parent     box
+	bmap       map[string]*box
+	blist      []*box
 	direction  Direction
 	dimensions dimensions
-	topLeft    point
+	Center     point
 	style      boxStyle
+}
+
+func (t *box) Append(b *box) error {
+	if t.bmap == nil {
+		t.bmap = make(map[string]*box)
+	}
+
+	if t.blist == nil {
+		t.blist = make([]*box, 0)
+	}
+
+	if _, ok := t.bmap[b.id]; ok {
+		return fmt.Errorf("id %v exists", b.id)
+	}
+
+	t.bmap[b.id] = b
+	t.blist = append(t.blist, b)
+
+	return nil
 }
 
 var DEFAULT_BOX_STYLE = boxStyle{
@@ -50,13 +75,18 @@ func calcBoxStyle(l1 boxStyle) boxStyle {
 	}
 }
 
-func (t *box) CalcDimensions() {
-	t.dimensions.H = t.style.LabelSize + 2*t.style.Padding
-	t.dimensions.W = len(t.label)*t.style.LabelSize/2 + 2*t.style.Padding
+func (t *box) calcDimensions() {
+	if t.label == "" {
+		t.dimensions.H = 2 * t.style.Padding
+		t.dimensions.W = 2 * t.style.Padding
+	} else {
+		t.dimensions.H = t.style.LabelSize + 2*t.style.Padding
+		t.dimensions.W = len(t.label)*t.style.LabelSize/2 + 2*t.style.Padding
+	}
 
-	if t.children != nil {
-		for _, cn := range t.children {
-			cn.CalcDimensions()
+	if t.bmap != nil {
+		for _, cn := range t.bmap {
+			cn.calcDimensions()
 
 			switch t.direction {
 			case DirectionHorizontal:
@@ -68,32 +98,9 @@ func (t *box) CalcDimensions() {
 	}
 }
 
-func (t *box) CalcTopLeft(topLeft point) {
-	t.topLeft.X = getInt(t.style.Padding, topLeft.X)
-	t.topLeft.Y = getInt(t.style.Padding, topLeft.Y)
-
-	if t.children != nil {
-		lastTopLeft := point{
-			X: t.topLeft.X,
-			Y: t.topLeft.Y,
-		}
-
-		for _, cn := range t.children {
-			switch t.direction {
-			case DirectionHorizontal:
-				lastTopLeft.X = t.TopLeft().X + t.dimensions.W + t.style.Padding
-				lastTopLeft.Y = t.topLeft.Y
-			case DirectionVertical:
-				lastTopLeft.X = t.TopLeft().X
-				lastTopLeft.Y = t.TopLeft().Y + t.dimensions.H + t.style.Padding
-			}
-
-			cn.CalcTopLeft(lastTopLeft)
-		}
-	}
-}
-
 func (t box) Draw(canvas *svg.SVG) {
+	t.calcDimensions()
+
 	canvas.Roundrect(
 		t.TopLeft().X, t.TopLeft().Y,
 		t.dimensions.W, t.dimensions.H,
@@ -108,8 +115,8 @@ func (t box) Draw(canvas *svg.SVG) {
 
 	canvas.Text(textBottomLeft.X, textBottomLeft.Y, t.label, t.textAttrs())
 
-	if t.children != nil {
-		for _, sc := range t.children {
+	if t.bmap != nil {
+		for _, sc := range t.bmap {
 			sc.Draw(canvas)
 		}
 	}
@@ -117,57 +124,57 @@ func (t box) Draw(canvas *svg.SVG) {
 
 func (t box) TopLeft() point {
 	return point{
-		X: t.topLeft.X,
-		Y: t.topLeft.Y,
+		X: t.Center.X - t.dimensions.W/2,
+		Y: t.Center.Y - t.dimensions.H/2,
 	}
 }
 
 func (t box) TopCenter() point {
 	return point{
-		X: t.topLeft.X + t.dimensions.W/2,
-		Y: t.topLeft.Y,
+		X: t.Center.X,
+		Y: t.Center.Y - t.dimensions.H/2,
 	}
 }
 
 func (t box) TopRight() point {
 	return point{
-		X: t.topLeft.X + t.dimensions.W,
-		Y: t.topLeft.Y,
+		X: t.Center.X + t.dimensions.W/2,
+		Y: t.Center.Y - t.dimensions.H/2,
 	}
 }
 
 func (t box) RightCenter() point {
 	return point{
-		X: t.topLeft.X + t.dimensions.W,
-		Y: t.topLeft.Y * t.dimensions.H / 2,
+		X: t.Center.X + t.dimensions.W/2,
+		Y: t.Center.Y,
 	}
 }
 
 func (t box) LeftCenter() point {
 	return point{
-		X: t.topLeft.X,
-		Y: t.topLeft.Y * t.dimensions.H / 2,
+		X: t.Center.X - t.dimensions.W/2,
+		Y: t.Center.Y,
 	}
 }
 
 func (t box) BottomLeft() point {
 	return point{
-		X: t.topLeft.X,
-		Y: t.topLeft.Y * t.dimensions.H,
+		X: t.Center.X - t.dimensions.W/2,
+		Y: t.Center.Y + t.dimensions.H/2,
 	}
 }
 
 func (t box) BottomCenter() point {
 	return point{
-		X: t.topLeft.X * t.dimensions.W / 2,
-		Y: t.topLeft.Y * t.dimensions.H,
+		X: t.Center.X,
+		Y: t.Center.Y + t.dimensions.H/2,
 	}
 }
 
 func (t box) BottomRight() point {
 	return point{
-		X: t.topLeft.X * t.dimensions.W,
-		Y: t.topLeft.Y * t.dimensions.H,
+		X: t.Center.X + t.dimensions.W/2,
+		Y: t.Center.Y + t.dimensions.H/2,
 	}
 }
 

@@ -31,6 +31,13 @@ type Graph struct {
 	boxStyle
 }
 
+func (t Graph) CenterPoint() point {
+	return point{
+		X: t.Width / 2,
+		Y: t.Height / 2,
+	}
+}
+
 var DEFAULT_GRAPH_ATTRIBUTES = GraphAttributes{
 	Height:    250,
 	Width:     250,
