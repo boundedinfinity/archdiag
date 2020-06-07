@@ -14,7 +14,7 @@ const (
 type box struct {
 	id         string
 	label      string
-	parent     box
+	parent     *box
 	bmap       map[string]*box
 	blist      []*box
 	direction  Direction
@@ -100,6 +100,15 @@ func (t *box) calcDimensions() {
 
 func (t box) Draw(canvas *svg.SVG) {
 	t.calcDimensions()
+
+	switch t.direction {
+	case DirectionHorizontal:
+		t.Center.X = t.parent.TopLeft().X + t.dimensions.W/2 + t.style.Padding
+		t.Center.Y = t.parent.TopLeft().Y + t.style.Padding
+	case DirectionVertical:
+		t.Center.X = t.parent.TopCenter().X
+		t.Center.Y = t.parent.TopCenter().Y + t.style.Padding
+	}
 
 	canvas.Roundrect(
 		t.TopLeft().X, t.TopLeft().Y,

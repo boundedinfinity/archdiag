@@ -49,10 +49,10 @@ func (t *ArchDiag) process() error {
 
 func (t *ArchDiag) processNode(p *box, id string, n Node) error {
 	b := &box{
-		id:    id,
-		p:     p,
-		label: getStr(id, n.Label),
-		style: calcBoxStyle(n.boxStyle),
+		id:     id,
+		parent: p,
+		label:  getStr(id, n.Label),
+		style:  calcBoxStyle(n.boxStyle),
 	}
 
 	p.Append(b)
